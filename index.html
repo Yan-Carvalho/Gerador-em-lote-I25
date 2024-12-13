@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate and Download Barcodes from Batch</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        .barcode-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .barcode {
+            width: 80%;
+            height: auto;
+        }
+        #generate-button, #download-all-button {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <label for="file-input">Carregar arquivo de texto (.txt):</label>
+        <input type="file" id="file-input" accept=".txt" />
+        <button id="generate-button">Gerar Códigos de Barras</button>
+        <button id="download-all-button">Baixar Todos os Códigos de Barras</button>
+    </div>
+    <div id="barcode-container" class="barcode-container"></div>
+
+    <script>
+        document.getElementById("generate-button").addEventListener("click", function() {
+            const fileInput = document.getElementById("file-input").files[0];
+            if (fileInput) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const text = event.target.result;
+                    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length === 12); // Filtra linhas com 12 dígitos
+                    const container = document.getElementById("barcode-container");
+                    container.innerHTML = ''; // Limpa o contêiner para exibir os códigos de barras
+
+                    lines.forEach((barcodeInput, index) => {
+                        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                        svg.setAttribute("id", `barcode-${index}`);
+                        svg.setAttribute("data-number", barcodeInput); // Armazena o número de referência
+                        container.appendChild(svg);
+
+                        try {
+                            JsBarcode(`#barcode-${index}`, barcodeInput, {
+                                format: "ITF",
+                                displayValue: true,
+                                fontSize: 20,
+                                width: 2,
+                                height: 100
+                            });
+                        } catch (error) {
+                            console.error("Erro ao gerar código de barras:", error);
+                        }
+                    });
+                };
+                reader.readAsText(fileInput);
+            } else {
+                alert("Por favor, carregue um arquivo de texto.");
+            }
+        });
+
+        document.getElementById("download-all-button").addEventListener("click", function() {
+            const svgs = document.querySelectorAll("svg");
+            if (svgs.length > 0) {
+                svgs.forEach((svg, index) => {
+                    const barcodeNumber = svg.getAttribute("data-number");
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+                    const svgData = new XMLSerializer().serializeToString(svg);
+                    const img = new Image();
+
+                    img.onload = function() {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        const pngFile = canvas.toDataURL("image/png");
+
+                        const link = document.createElement("a");
+                        link.href = pngFile;
+                        link.download = `${barcodeNumber}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    };
+
+                    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+                    const url = URL.createObjectURL(svgBlob);
+                    img.src = url;
+                });
+            } else {
+                alert("Nenhum código de barras gerado para download.");
+            }
+        });
+    </script>
+</body>
+</html>
