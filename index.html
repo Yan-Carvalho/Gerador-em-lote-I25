@@ -255,7 +255,7 @@
                                         downloadBarcodesBatch(downloadBatchStart, downloadBatchEnd, function() {
                                             downloadBatchStart = downloadBatchEnd;
                                             if (downloadBatchStart < barcodes.length) {
-                                                setTimeout(downloadNextBatch, 30000); // Atraso de 10 segundos entre cada download
+                                                setTimeout(downloadNextBatch, 60000); // Atraso de 10 segundos entre cada download
                                             } else {
                                                 document.getElementById("completion-message").innerText = "Download concluído!";
                                                 document.getElementById("back-button").style.display = "block";
@@ -290,3 +290,4 @@
     </script>
 </body>
 </html>
+
